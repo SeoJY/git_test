@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,target-densitydpi=medium-dpi">
+	<title>랜덤돌리기</title>
+	<style>
+    #wrap{max-width:720px;margin: 30px auto;}
+    .game-wrap *{margin:0;padding:0;font-family: '나눔고딕','Nanum Gothic', serif !important;}
+    .game-wrap button, .game-wrap input{background:none;appearance:none}
+    .game-wrap button{border:0}
+    .game-wrap input{border:1px solid #ccc; box-sizing: border-box}
+    .game-wrap .game-title{font-weight: normal; font-size:30px}
+    .game-wrap .game-desc{margin-top:20px;font-size:14px}
+    .game-wrap .game-tabpanel{padding:50px;text-align:center;}
+    .game-wrap .game-inp-wrap{margin-top:20px;vertical-align:top}
+    .game-wrap .game-inp-wrap label{display:inline-block;margin-right:20px; font-size:20px;font-weight:bold;line-height:35px;vertical-align:middle;}
+    #tab-text{counter-reset: section;}
+    #tab-text label:after{counter-increment: section;content: "선택사항 " counter(section) " : ";}
+    .game-wrap .game-inp-wrap .inp-number{width:50px; height:36px; font-size:30px; text-align:center; vertical-align:middle}
+    .game-wrap .game-txt-wrap{position:relative;padding-bottom:45px}
+    .game-wrap .game-txt-wrap label{display:block;text-align:left}
+    .game-wrap .game-txt-wrap .inp-txt{width: 100%; height: 36px; padding: 0 10px;font-size:20px; vertical-align:middle;}
+    .game-wrap .game-txt-wrap .btn-add,.game-wrap .game-txt-wrap .btn-remove{position:absolute;bottom:0; width:36px; height:36px; margin-left: 10px;border-radius: 50%;background-color:#999; color: #fff; font-weight:bold; font-size:0; vertical-align: middle;}
+    .game-wrap .game-txt-wrap .btn-add{right:40px}
+    .game-wrap .game-txt-wrap .btn-remove{right: 0}
+    .game-wrap .game-txt-wrap .btn-add:after,.game-wrap .game-txt-wrap .btn-add:before,.game-wrap .game-txt-wrap .btn-remove:before{position:absolute;background-color:#fff;content:'';}
+    .game-wrap .game-txt-wrap .btn-add:after{top:10px;left:50%;width:2px;height:16px;margin-left:-1px}
+    .game-wrap .game-txt-wrap .btn-add:before,.game-wrap .game-txt-wrap .btn-remove:before{left:10px;top:50%;height:2px;width:16px;margin-top:-1px}
+    .game-wrap .game-btn-wrap{margin-top:40px;}
+    .game-wrap .game-btn-wrap .btn-submit{min-width:50%;padding:15px 20px;background-color:#555; color:#fff; font-size:25px;letter-spacing:3px;text-transform: uppercase;}
+    .game-wrap .game-result{margin-top: 50px; padding:30px;background-color:#f0f0f0; }
+    .game-wrap .game-result-tit{ margin-bottom:30px; padding-bottom: 20px; border-bottom: 1px dashed #999; font-size: 20px;}
+    .game-wrap #tab-number .game-result-wrap{ font-size: 50px;}
+    .game-wrap #tab-text .game-result-wrap{ font-size: 30px; line-height: 1.5;}
+    @media screen and (max-width: 768px) {
+        .game-wrap{padding: 30px}
+        .game-wrap .game-tabpanel{padding:30px 0}
+    }
+</style>
+</head>
+<body>
+<div id="wrap">
+    <div class="game-wrap">
+        <h2 class="game-title">Random Game</h2>
+        <p class="game-desc">랜덤 선택을 위한 선택지를 입력하세요.</p>
+        <div class="game-tabpanel" id="tab-text">
+            <div class="game-input-wrap">
+                <div class="game-txt-wrap">
+                    <div class="game-inp-wrap">
+                        <label for="opt0"></label><input type="text" id="opt0" class="inp-txt" placeholder="선택지를 입력해 주세요">
+                    </div>
+                    <div class="game-inp-wrap">
+                        <label for="opt1"></label><input type="text" id="opt1" class="inp-txt" placeholder="선택지를 입력해 주세요">
+                    </div>
+                    <button type="button" class="btn-add">추가</button>
+                    <button type="button" class="btn-remove">제거</button>
+                </div>
+                <div class="game-btn-wrap">
+                    <button type="button" class="btn-submit">Draw!!!</button>
+                </div>
+            </div>
+            <div class="game-result">
+                <h3 class="game-result-tit">선택결과</h3>
+                <div class="game-result-wrap"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script
+  src="https://code.jquery.com/jquery-1.12.4.min.js"
+  integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+  crossorigin="anonymous"></script>
+<script>
+(function (win, $) {
+    'use strict';
+    var gameObj = {
+        init : function() {
+            this.setElements();
+            this.bindEvents();
+        },
+        setElements : function() {
+            this.tab = $('.game-tab');
+            this.tabList = this.tab.find('li');
+            this.tabButton = this.tabList.find('a');
+            this.tabPanel = $('.game-tabpanel');
+            this.numWrap = $('#tab-number');
+            this.numInp = this.numWrap.find('.inp-number');
+            this.numBtn = this.numWrap.find('.btn-submit');
+            this.textWrap = $('#tab-text');
+            this.textInpWrap = this.textWrap.find('.game-txt-wrap');
+            this.textBtn = this.textWrap.find('.btn-submit');
+            this.addBtn = this.textWrap.find('.btn-add');
+            this.removeBtn = this.textWrap.find('.btn-remove');
+            this.resultWrap = $('.game-result-wrap');
+            this.result = '';
+            this.checked = false;
+        },
+        bindEvents : function() {
+            this.tabButton.on('click', $.proxy(this.tabFunc, this));
+            this.numBtn.on('click', $.proxy(this.numFunc, this));
+            this.addBtn.on('click', $.proxy(this.addFunc, this));
+            this.removeBtn.on('click', $.proxy(this.removeFunc, this));
+            this.textBtn.on('click', $.proxy(this.textFunc, this));
+        },
+        tabFunc : function(e) {
+            var target = $(e.currentTarget),
+            targetIndex = target.parent('li').index();
+            e.preventDefault();
+            if (target.parent('li').hasClass('on')) return;
+            this.tabReset();
+            target.parent('li').addClass('on');
+            this.tabPanel.eq(targetIndex).show();
+            this.resultWrap.html('');
+        },
+        tabReset : function() {
+            this.tabList.removeClass('on');
+            this.tabPanel.hide();
+            this.checked = false;
+        },
+        numFunc : function() {
+            if (this.checked) {
+                alert('이미 실행하였습니다.');
+                return;
+            };
+            var maxNum = this.numInp.val();
+            this.result = Math.floor(Math.random() * maxNum + 1);
+            this.resultRender();
+            this.checked = true;
+        },
+        addFunc : function() {
+            var textInp = this.textWrap.find('.game-inp-wrap').last();
+            textInp.clone().appendTo(this.textInpWrap);
+            this.resetId();
+        },
+        resetId : function() {
+            var textInp = this.textWrap.find('.game-inp-wrap'),
+            textInplast = textInp.last(),
+            textInpIndex = textInp.length,
+            textId = 'opt' + textInpIndex;
+            textInplast.find('label').attr('for', textId);
+            textInplast.find('.inp-txt').attr('id', textId);
+            textInplast.find('.inp-txt').attr('value', '');
+        },
+        removeFunc : function() {
+            var textInp = this.textWrap.find('.game-inp-wrap'),
+            textLast = textInp.last();
+            if (textInp.length < 3) return;
+            textLast.remove();
+        },
+        textFunc : function() {
+            if (this.checked) {
+                alert('이미 실행하였습니다.');
+                return;
+            };
+            this.inpArray = this.textWrap.find('.inp-txt');
+            this.textArray = [];
+            for (var i = 0; i < this.inpArray.length; i++) {
+                var textVal = this.inpArray[i].value;
+                this.textArray.push(textVal);
+            }
+            var textRandom = Math.floor(Math.random() * this.textArray.length);
+            this.result = this.textArray[textRandom];
+            this.resultRender();
+        },
+        resultRender : function() {
+            this.resultWrap.html(this.result);
+            this.checked = true;
+        }
+    }
+    gameObj.init();
+})(window, window.jQuery);
+</script>
+</body>
+</html>
